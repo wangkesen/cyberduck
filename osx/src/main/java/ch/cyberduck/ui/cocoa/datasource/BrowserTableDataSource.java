@@ -44,6 +44,7 @@ import ch.cyberduck.core.Scheme;
 import ch.cyberduck.core.UserDateFormatterFactory;
 import ch.cyberduck.core.date.AbstractUserDateFormatter;
 import ch.cyberduck.core.exception.AccessDeniedException;
+import ch.cyberduck.core.features.Copy;
 import ch.cyberduck.core.features.Move;
 import ch.cyberduck.core.features.Touch;
 import ch.cyberduck.core.formatter.SizeFormatter;
@@ -490,6 +491,11 @@ public abstract class BrowserTableDataSource extends ProxyController implements 
                     return NSDraggingInfo.NSDragOperationMove;
                 }
                 else {
+                    for(Path file : pasteboard) {
+                        if(!controller.getSession().getFeature(Copy.class).isSupported(file, destination)) {
+                            return NSDraggingInfo.NSDragOperationNone;
+                        }
+                    }
                     // If copying between sessions is supported
                     return NSDraggingInfo.NSDragOperationCopy;
                 }
@@ -611,7 +617,7 @@ public abstract class BrowserTableDataSource extends ProxyController implements 
                     if(!file.exists()) {
                         try {
                             LocalTouchFactory.get().touch(file);
-                            IconServiceFactory.get().set(file, new TransferStatus());
+                            IconServiceFactory.get().set(file, new TransferStatus().length(0L));
                         }
                         catch(AccessDeniedException e) {
                             log.warn(String.format("Failure creating file %s %s", file, e.getMessage()));
